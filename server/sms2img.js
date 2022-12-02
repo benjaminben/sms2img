@@ -1,32 +1,19 @@
-require('dotenv').config()
+import fetch from "node-fetch"
 const fs = require("fs")
 const { promises: { readFile } } = fs
-const fetch = require("node-fetch")
-const admin = require("firebase-admin")
-const { initializeApp, cert } = require("firebase-admin/app")
-const { getFirestore, FieldValue } = require("firebase-admin/firestore")
-const serviceAccount = require("./sa.json")
+const { FieldValue } = require("firebase-admin/firestore")
 const { Configuration, OpenAIApi } = require("openai")
-const express = require('express')
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_SK
 })
 const openai = new OpenAIApi(configuration)
-const app = express()
-app.use(express.json())
-app.use(express.urlencoded())
 
-fs.mkdirSync("./output", {recursive: true})
-
-const projectName = process.env.PROJECT_NAME
-const fbApp = initializeApp({
-  credential: cert(serviceAccount),
-  storageBucket: `${projectName}.appspot.com`,
-  databaseURL: `${projectName}.firebaseio.com`
-})
-
+const admin = require("firebase-admin")
+const { getFirestore } = require("firebase-admin/firestore")
 const bucket = admin.storage().bucket()
 const firestore = getFirestore()
+
+fs.mkdirSync("./output", {recursive: true})
 
 const generateImage = async (ops={}) => {
   const def = {
@@ -36,7 +23,6 @@ const generateImage = async (ops={}) => {
   }
   try {
     const bod = Object.assign(def, ops)
-    console.log(bod)
     const genResponse = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
       headers: {
@@ -52,10 +38,9 @@ const generateImage = async (ops={}) => {
   }
 } 
 
-const run = async (submission) => {
+export const run = async (submission) => {
   try {
     const { Body: prompt, ...Client } = submission
-    console.log(prompt)
     const params = {
       prompt,
       n: 2,
@@ -126,13 +111,3 @@ const run = async (submission) => {
     return err.message
   }
 }
-
-app.post("/sms2img", async (req, res, next) => {
-  const succ = await run(req.body)
-  res.status(succ.code || 200).send(`You succ: ${succ}`)
-})
-
-// run()
-app.listen(8080, () => {
-  console.log("alive on 8080")
-})
