@@ -9,7 +9,24 @@ const Viewer = () => {
   const [spotlightIndex, setSpotlightIndex] = useState(0)
   const [swapReady, setSwapReady] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const trackedIdx = useRef(0)
   const updateTimeout = useRef(0)
+
+  function cycleRange(start: number, end: number) {
+    killCycle()
+    updateTimeout.current = window.setTimeout(
+      () => setSpotlightIndex(current =>
+        current - start > 0
+        ? current - 1
+        : end - 1
+      ),
+      5 * 1000
+    )
+  }
+
+  function killCycle() {
+    window.clearTimeout(updateTimeout.current)
+  }
 
   // const nextIndex = useCallback((current: number) => {
   //   let next = current + 1
@@ -45,28 +62,30 @@ const Viewer = () => {
   //   }
   // }, [mounted])
 
-  // useEffect(() => {
-  //   if (submissions.length && swapReady) {
-  //     // setSpotlightIndex(current => nextIndex(current))
-  //     // refreshTimeout()
-  //   } else {
-  //     /* ... */
-  //   }
-  // }, [submissions, swapReady])
+  useEffect(() => {
+    console.log(submissions)
+    if (submissions.length && swapReady) {
+      cycleRange(0, submissions.length)
+      // setSpotlightIndex(current => nextIndex(current))
+      // refreshTimeout()
+    } else {
+      /* ... */
+    }
+  }, [submissions, swapReady])
 
   return(
     <div className={`${styles.Viewer}`}>
     {
       submissions.length
-      ? <div>
+      ? <div className={`${styles.entries}`}>
           {
-            // submissions[spotlightIndex].data.items.map((entryRef: DocumentReference) =>
+            submissions[spotlightIndex].data.items.map((entryRef: DocumentReference) =>
             submissions[submissions.length - 1].data.items.map((entryRef: DocumentReference) =>
               <Entry
                 key={entryRef.id}
                 id={entryRef.id}
               />
-            )
+            ))
           }
         </div>
       : "Initializing Viewer..."
