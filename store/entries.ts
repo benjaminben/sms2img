@@ -2,8 +2,6 @@ import create from "zustand"
 import { getDoc, DocumentReference } from "firebase/firestore"
 import { getStorage, getDownloadURL, ref } from "firebase/storage"
 
-const storage = getStorage()
-
 // type Entry = Promise<Object>
 export interface Entry {
   downloadURL: string,
@@ -26,11 +24,11 @@ const useEntriesStore = create<EntriesState>()((set, get) => {
     setLib(lib: EntriesLib) { set({ lib }) },
 
     addEntryToLib(entryRef: DocumentReference) {
+      const storage = getStorage()
       const { setLib, lib } = get()
       setLib({
         ...lib,
         [entryRef.id]: (async () => {
-          console.log("fetching entry:", entryRef.id)
           try {
             const entry = await getDoc(entryRef)
             const entryData = entry.data()
@@ -38,7 +36,6 @@ const useEntriesStore = create<EntriesState>()((set, get) => {
               throw `Entry data undefined for ${entryRef.id}`
             }
             const downloadURL = await getDownloadURL(ref(storage, entryData.storagePath))
-            // setLib({ ...lib, [entry.id]: { ...entryData, downloadURL } })
             const fin = { ...entryData, downloadURL }
             return fin
           } catch(err) {

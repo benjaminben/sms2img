@@ -1,6 +1,7 @@
 .Viewer {
   display: flex;
   height: 100vh;
+  /* grid-template-rows: repeat(min-content, 3); */
 }
 
 .entries {
@@ -10,4 +11,11 @@
   align-items: center;
   margin: auto;
   max-height: 100%;
+  grid-row: 2
+}
+
+.prompt {
+  position: absolute;
+  /* bottom: 0; */
+  grid-row: 3;
 }

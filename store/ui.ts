@@ -7,7 +7,8 @@ interface UiState {
 
 const useUiStore = create<UiState>()((set, get) => {
   return {
-    filterDateStart: midnightToday()
+    // filterDateStart: midnightToday()
+    filterDateStart: new Date("1993-03-16")
   }
 })
 

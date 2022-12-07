@@ -6,8 +6,6 @@ import {
 import useUiStore from "./ui"
 import useEntriesStore, { Entry } from "./entries"
 
-const db = getFirestore()
-
 interface Submission {
   id: string,
   data: DocumentData,
@@ -30,6 +28,7 @@ const useSubmissionsStore = create<SubmissionsState>()((set, get) => {
     setUnsubscribe(unsubscribe: Function | null) { set({ unsubscribe }) },
 
     init() {
+      const db = getFirestore()
       const { unsubscribe, setUnsubscribe, submissions, setSubmissions } = get()
       if (unsubscribe) { unsubscribe() }
       const { filterDateStart } = useUiStore.getState()

@@ -3,6 +3,10 @@ const fs = require("fs")
 const { promises: { readFile } } = fs
 const { FieldValue } = require("firebase-admin/firestore")
 const { Configuration, OpenAIApi } = require("openai")
+const twilioCLient = require("twilio")(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+)
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_SK
 })
@@ -32,6 +36,7 @@ const generateImage = async (ops={}) => {
       body: JSON.stringify(bod)
     })
     const genJson = await genResponse.json()
+    // console.log(genJson)
     return [null, genJson]
   } catch(err) {
     return [err, null]
@@ -103,11 +108,25 @@ export const run = async (submission) => {
     await submissionRef.set({
       ...params,
       timestamp: FieldValue.serverTimestamp(),
-      items: entryRefs.map(ref => ref),
+      items: entryRefs,
     })
     return `Fulfilled submission at ${Date.now()}`
   } catch(err) {
     console.error(err)
+    switch (err.type) {
+      case "invalid_request_error":
+        if (submission.From) {
+          twilioCLient.messages.create({   
+            messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID,
+            to: submission.From,
+            body: err.message
+          })
+          .then(message => console.log(message.sid))
+          .done()
+        }
+        break
+      default:
+    }
     return err.message
   }
 }
