@@ -29,13 +29,15 @@ const useSubmissionsStore = create<SubmissionsState>()((set, get) => {
 
     init() {
       const db = getFirestore()
-      const { unsubscribe, setUnsubscribe, submissions, setSubmissions } = get()
+      const { unsubscribe, setUnsubscribe, setSubmissions } = get()
       if (unsubscribe) { unsubscribe() }
       const { filterDateStart } = useUiStore.getState()
       const { addEntryToLib } = useEntriesStore.getState()
       const submissionsRef = collection(db, "submissions")
       const q = query(submissionsRef, where("timestamp", ">", filterDateStart))
       const unsub = onSnapshot(q, (snapshot) => {
+        const { submissions } = get()
+        const { spotlightIndex } = useUiStore.getState()
         const s: Submission[] = [...submissions]
         snapshot.docChanges().forEach((change) => {
           if (change.type === "added") {
@@ -43,9 +45,18 @@ const useSubmissionsStore = create<SubmissionsState>()((set, get) => {
             d.items.forEach((entryRef: DocumentReference) => {
               addEntryToLib(entryRef)
             })
-            s.push({id: change.doc.id, data: change.doc.data()})
+            // s.push({id: change.doc.id, data: change.doc.data()})
+            s.splice(
+              spotlightIndex // Loop position
+              ? spotlightIndex - 1
+              : submissions.length - 1,
+              0,
+              { id: change.doc.id, data: change.doc.data() }
+            )
+
           }
         })
+        console.log("Next submissions array:", s)
         setSubmissions(s)
       })
       setUnsubscribe(unsub)

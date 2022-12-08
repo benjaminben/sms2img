@@ -48,7 +48,7 @@ export const run = async (submission) => {
     const { Body: prompt, ...Client } = submission
     const params = {
       prompt,
-      n: 2,
+      n: 1,
     }
     const [genErr, genJson] = await generateImage(params)
     if (genErr) { throw genErr }

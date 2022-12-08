@@ -1,44 +1,39 @@
 import styles from "./Viewer.module.css"
 import { useSubmissionsStore } from "@/store"
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useRef, useEffect } from "react"
 import Entry from "@/components/Entry"
 import { DocumentReference } from "firebase/firestore"
+import { useUiStore } from "@/store"
+
+const cycleDuration = 10 * 60
 
 const Viewer = () => {
   const { submissions } = useSubmissionsStore()
-  const [spotlightIndex, setSpotlightIndex] = useState(0)
-  const [swapReady, setSwapReady] = useState(true)
-  const updateTimeout = useRef(0)
+  const { spotlightIndex, spotlightNext } = useUiStore()
+  const updateFrame = useRef(0)
+  const tick = useRef(0)
 
-  function cycleRange(start: number, end: number) {
-    killCycle()
-    updateTimeout.current = window.setTimeout(
-      () => {
-        setSpotlightIndex(current =>
-          current - start > 0
-          ? current - 1
-          : end - 1
-        )
-        cycleRange(start, end)
-      },
-      5 * 1000
-    )
+  function onTick() {
+    spotlightNext()
   }
 
-  function killCycle() {
-    window.clearTimeout(updateTimeout.current)
+  function run() {
+    tick.current += 1
+    if (tick.current === cycleDuration) {
+      onTick()
+      tick.current = 0
+    }
+    updateFrame.current = requestAnimationFrame(run)
   }
 
   useEffect(() => {
-    if (submissions.length && swapReady) {
-      cycleRange(0, submissions.length)
-    } else {
-      /* ... */
+    run()
+    return () => {
+      cancelAnimationFrame(updateFrame.current)
     }
-  }, [submissions, swapReady])
+  }, [])
 
   const currentSubmission = submissions[spotlightIndex]
-
   return(
     <div className={`${styles.Viewer}`}>
     {
