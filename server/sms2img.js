@@ -73,8 +73,16 @@ export const run = async (submission) => {
       const entry = { file, name }
       return entry
     }
+    const prepTransfer = async (br) => {
+      const { blob, order } = br
+      const name = `${Date.now()}-${prompt.replace(/\W/g, '_')}-${order}.jpg`
+      const file = blob
+      const entry = { file, name }
+      return entry
+    }
     const entries = await Promise.all(
-      blobResponses.map((br) => downloadGen(br))
+      // blobResponses.map((br) => downloadGen(br))
+      blobResponses.map((br) => prepTransfer(br))
     )
     // await blobResponse.body.pipe(fs.createWriteStream(filepath))
 
@@ -86,13 +94,17 @@ export const run = async (submission) => {
       await new Promise((resolve, reject) => {
         const blob = bucket.file(dest);
         const blobStream = blob.createWriteStream({ resumable: false });
+
+        const pipedStream = file.body.pipe(blobStream)
     
-        blobStream.on('finish', function () {
+        // blobStream.on('finish', function () {
+        pipedStream.on('finish', function () {
           const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
           resolve(publicUrl);
         }).on('error', function (err) {
           reject(err);
-        }).end(file);
+        // }).end(file);
+        });
       })
       const entryRef = firestore.collection("entry").doc()
       await entryRef.set({

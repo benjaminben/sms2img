@@ -4,6 +4,8 @@ const { initializeApp, cert } = require("firebase-admin/app")
 const serviceAccount = require("./sa.json")
 const projectName = process.env.PROJECT_NAME
 
+console.log(projectName)
+
 initializeApp({
   credential: cert(serviceAccount),
   storageBucket: `${projectName}.appspot.com`,
