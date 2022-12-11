@@ -1,5 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
+import "@/server/firebase"
 import { run } from "@/server/sms2img.js"
 
 type Data = {

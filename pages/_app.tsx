@@ -1,14 +1,18 @@
 import "../styles/globals.css"
 import { useEffect } from "react"
 import type { AppProps } from "next/app"
-import "@/firebase"
+import "@/firebase/index.js"
 import { useSubmissionsStore } from "@/store"
 
 export default function App({ Component, pageProps }: AppProps) {
   const { init: initSubmissions } = useSubmissionsStore()
 
-  useEffect(() => {
+  async function start() {
     initSubmissions()
+  }
+
+  useEffect(() => {
+    start()
   }, [])
 
   return <Component {...pageProps} />

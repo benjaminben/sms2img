@@ -32,3 +32,19 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
+## Deploy on Firebase
+
+Firebase files not included in git, must init the project from a new machine
+
+- `firebase experiments:enable webframeworks`
+- `firebase init hosting`
+- `firebase deploy`
+
+Also will need to add the following environment variables using `firebase functions:secrets:set <VAR_NAME>` and [granting your firebase function access to them](https://cloud.google.com/functions/docs/configuring/secrets):
+
+- `OPENAI_SK`
+- `PROJECT_NAME`
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_MESSAGING_SERVICE_SID`

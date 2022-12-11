@@ -37,3 +37,7 @@ next-env.d.ts
 
 sa.json
 output
+
+.firebase
+.firebaserc
+firebase.json
