@@ -15,6 +15,7 @@ const useUiStore = create<UiState>()((set, get) => {
   return {
     filterDateStart: midnightToday(),
     // filterDateStart: new Date("1993-03-16"),
+    // filterDateStart: new Date(),
 
     spotlightIndex: 0,
     setSpotlightIndex(update: number | Function) {
@@ -30,9 +31,11 @@ const useUiStore = create<UiState>()((set, get) => {
     spotlightNext() {
       const { spotlightIndex, setSpotlightIndex } = get()
       const { submissions } = useSubmissionsStore.getState()
+      if (!submissions.length) { return }
       const next = spotlightIndex === 0
         ? submissions.length - 1
         : spotlightIndex - 1
+      console.log("next:", next, "num subs:", submissions.length)
       setSpotlightIndex(next)
     }
   }

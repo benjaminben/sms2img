@@ -48,3 +48,11 @@ Also will need to add the following environment variables using `firebase functi
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
 - `TWILIO_MESSAGING_SERVICE_SID`
+
+## Weird notes
+
+- Firebase hosting a preferred deploy target over vercel because hobby plan vercel has a 10 second timeout on serverless functions, whereas firebase cloud functions get 5 minutes.
+- Using Cloud Tasks with firebase functions as a method of rate-limiting calls to OpenAI
+- - As of writing there is no queuing logic on the server side, so need to consider this if hosting locally or on a VM like Railway, Digital Ocean, etc
+- In a perfect world, UI + functions would be hosted cleanly on a paid-tier vercel deploy, which could handle potentially longer requests for generating images. However, would still potentially run into queuing/rate-limiting issues with larger audiences. And we still rely on Cloud Firestore as our db.
+- Some kind of all-in-one solution would be to host on Railway (with queuing probably happening in-memory) with Supabase to store submissions

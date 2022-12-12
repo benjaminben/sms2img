@@ -18,6 +18,7 @@ const Viewer = () => {
   }
 
   function run() {
+    console.log("frame")
     tick.current += 1
     if (tick.current === cycleDuration) {
       onTick()
