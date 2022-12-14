@@ -1,0 +1,9 @@
+.EntryPreview {
+  width: 100%;
+  max-width: 20rem;
+}
+
+.EntryPreview img {
+  width: 100%;
+  height: auto;
+}

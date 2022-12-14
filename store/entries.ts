@@ -16,6 +16,7 @@ interface EntriesState {
   setLib: Function,
   addEntryToLib: Function,
   entry: Function,
+  getEntryDoc: Function,
 }
 
 const useEntriesStore = create<EntriesState>()((set, get) => {
@@ -25,25 +26,28 @@ const useEntriesStore = create<EntriesState>()((set, get) => {
 
     addEntryToLib(entryRef: DocumentReference) {
       const storage = getStorage()
-      const { setLib, lib } = get()
+      const { setLib, lib, getEntryDoc } = get()
       setLib({
         ...lib,
-        [entryRef.id]: (async () => {
-          try {
-            const entry = await getDoc(entryRef)
-            const entryData = entry.data()
-            if (!entryData) {
-              throw `Entry data undefined for ${entryRef.id}`
-            }
-            const downloadURL = await getDownloadURL(ref(storage, entryData.storagePath))
-            const fin = { ...entryData, downloadURL }
-            return fin
-          } catch(err) {
-            console.error(err)
-            return err
-          }
-        })()
+        [entryRef.id]: getEntryDoc()
       })
+    },
+
+    async getEntryDoc(entryRef: DocumentReference) {
+      const storage = getStorage()
+      try {
+        const entry = await getDoc(entryRef)
+        const entryData = entry.data()
+        if (!entryData) {
+          throw `Entry data undefined for ${entryRef.id}`
+        }
+        const downloadURL = await getDownloadURL(ref(storage, entryData.storagePath))
+        const fin = { ...entryData, downloadURL }
+        return fin
+      } catch(err) {
+        console.error(err)
+        return err
+      }
     },
 
     async entry(id: string) {
