@@ -5,6 +5,7 @@ import { getStorage, getDownloadURL, ref } from "firebase/storage"
 // type Entry = Promise<Object>
 export interface Entry {
   downloadURL: string,
+  prompt: string,
 }
 
 interface EntriesLib {

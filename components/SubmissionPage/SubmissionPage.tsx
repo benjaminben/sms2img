@@ -2,7 +2,7 @@ import {
   getFirestore, doc, getDoc, query, where, collection, onSnapshot,
   DocumentReference, DocumentData,
 } from "firebase/firestore"
-import useEntriesStore from "@/store/entries"
+import useEntriesStore, { Entry } from "@/store/entries"
 import { useEffect, useState } from "react"
 import styles from "./SubmissionPage.module.css"
 import EntryPreview from "../EntryPreview"
@@ -15,7 +15,7 @@ interface SubmissionPageProps {
 const SubmissionPage = (props: SubmissionPageProps) => {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(true)
-  const [entries, setEntries] = useState([])
+  const [entries, setEntries] = useState<Entry[]>([])
   const { getEntryDoc } = useEntriesStore()
 
   useEffect(() => {
@@ -39,7 +39,7 @@ const SubmissionPage = (props: SubmissionPageProps) => {
       console.error(err)
       if (typeof err === "string") {
         setError(err)
-      } else {
+      } else if (err instanceof Error) {
         setError(err.message)
       }
     } finally {
@@ -50,7 +50,7 @@ const SubmissionPage = (props: SubmissionPageProps) => {
   return( loading ? <>loading...</> : error ? <>{error}</> :
     <div className={`${styles.SubmissionPage}`}>
       <div className="previews">
-        { entries.map(entry => <EntryPreview entry={entry} />) }
+        { entries.map((entry: Entry) => <EntryPreview key={entry.downloadURL} entry={entry} />) }
       </div>
       <SquareCheckout />
     </div>
