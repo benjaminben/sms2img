@@ -19,7 +19,7 @@ const firestore = getFirestore()
 
 fs.mkdirSync("./output", {recursive: true})
 
-const generateImage = async (ops={}) => {
+async function generateImage(ops={}) {
   const def = {
     prompt: "Turtle wizard",
     n: 1,
@@ -41,11 +41,66 @@ const generateImage = async (ops={}) => {
   } catch(err) {
     return [err, null]
   }
-} 
+}
+
+async function prepTransfer(br) {
+  const { blob, order, prompt } = br
+  const name = `${Date.now()}-${prompt.replace(/\W/g, '_')}-${order}.jpg`
+  const file = blob
+  const entry = { file, name }
+  return entry
+}
+
+async function uploadFb(entry, fields) {
+  const { file, name } = entry
+  const dest = `output/${name}`
+  await new Promise((resolve, reject) => {
+    const blob = bucket.file(dest);
+    const blobStream = blob.createWriteStream({ resumable: false });
+
+    const pipedStream = file.body.pipe(blobStream)
+
+    pipedStream.on('finish', function () {
+      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+      resolve(publicUrl);
+    }).on('error', function (err) {
+      reject(err);
+    });
+  })
+
+  const entryRef = firestore.collection("entry").doc()
+  await entryRef.set({
+    storagePath: dest,
+    ...fields,
+  })
+  return entryRef
+}
+
+async function findOrCreateSmsUser(phoneNumber) {
+  const userRef = firestore.doc(`smsUsers/${phoneNumber}`)
+  const userSnapshot = await userRef.get()
+  const results = { ref: userRef }
+  if (userSnapshot.exists) {
+    results.data = userSnapshot.data
+  } else {
+    const data = {
+      createdAt: FieldValue.serverTimestamp(),
+      blocked: false,
+    }
+    await userRef.set(data)
+    results.data = data
+  }
+  return results
+}
 
 export const run = async (submission) => {
   try {
     const { Body: prompt, ...Client } = submission
+    if (!Client.From) {
+      throw { type: "bad_submission", message: "Invalid submission: missing `From` value" }
+    }
+    const {ref: smsUserRef, data: smsUserData} = await findOrCreateSmsUser(Client.From)
+
     const params = {
       prompt,
       n: 1,
@@ -57,71 +112,23 @@ export const run = async (submission) => {
     const blobResponses = await Promise.all(new Array(params.n).fill()
       .map((_,idx) =>
         fetch(genJson.data[idx].url)
-          .then(blob => ({ blob, order: idx }))
+          .then(blob => ({ blob, order: idx, prompt }))
     ))
-    const downloadGen = async (br) => {
-      const { blob, order } = br
-      const name = `${Date.now()}-${prompt.replace(/\W/g, '_')}-${order}.jpg`
-      const filepath = `./output/${name}`
-      const dest = fs.createWriteStream(filepath)
-      await new Promise((resolve, reject) => {
-        blob.body.pipe(dest)
-        blob.body.on('end', () => resolve())
-        dest.on('error', reject)
-      })
-      const file = await readFile(filepath)
-      const entry = { file, name }
-      return entry
-    }
-    const prepTransfer = async (br) => {
-      const { blob, order } = br
-      const name = `${Date.now()}-${prompt.replace(/\W/g, '_')}-${order}.jpg`
-      const file = blob
-      const entry = { file, name }
-      return entry
-    }
-    const entries = await Promise.all(
-      // blobResponses.map((br) => downloadGen(br))
-      blobResponses.map((br) => prepTransfer(br))
-    )
-    // await blobResponse.body.pipe(fs.createWriteStream(filepath))
 
+    const entries = await Promise.all(blobResponses.map((br) => prepTransfer(br)))
     const submissionRef = firestore.collection('submissions').doc()
-
-    const uploadFb = async (entry) => {
-      const { file, name } = entry
-      const dest = `output/${name}`
-      await new Promise((resolve, reject) => {
-        const blob = bucket.file(dest);
-        const blobStream = blob.createWriteStream({ resumable: false });
-
-        const pipedStream = file.body.pipe(blobStream)
-    
-        // blobStream.on('finish', function () {
-        pipedStream.on('finish', function () {
-          const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-          resolve(publicUrl);
-        }).on('error', function (err) {
-          reject(err);
-        // }).end(file);
-        });
-      })
-      const entryRef = firestore.collection("entry").doc()
-      await entryRef.set({
-        submissionRef,
-        prompt,
-        model: "dall-e 2",
-        storagePath: dest,
-      })
-      return entryRef
-    }
-    const entryRefs = await Promise.all(entries.map(e => uploadFb(e)))
+    const entryRefs = await Promise.all(entries.map(entry => uploadFb(entry, {
+      submissionRef,
+      prompt,
+      model: "dall-e 2",
+    })))
     
     await submissionRef.set({
       ...params,
       timestamp: FieldValue.serverTimestamp(),
       items: entryRefs,
     })
+    await submissionRef.collection('private').doc('sender').set({ smsUserRef })
     return `Fulfilled submission at ${Date.now()}`
   } catch(err) {
     console.error(err)

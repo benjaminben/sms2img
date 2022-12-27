@@ -30,7 +30,7 @@ const useEntriesStore = create<EntriesState>()((set, get) => {
       const { setLib, lib, getEntryDoc } = get()
       setLib({
         ...lib,
-        [entryRef.id]: getEntryDoc()
+        [entryRef.id]: getEntryDoc(entryRef)
       })
     },
 
