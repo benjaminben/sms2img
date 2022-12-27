@@ -81,7 +81,7 @@ async function findOrCreateSmsUser(phoneNumber) {
   const userSnapshot = await userRef.get()
   const results = { ref: userRef }
   if (userSnapshot.exists) {
-    results.data = userSnapshot.data
+    results.data = userSnapshot.data()
   } else {
     const data = {
       createdAt: FieldValue.serverTimestamp(),
@@ -94,12 +94,14 @@ async function findOrCreateSmsUser(phoneNumber) {
 }
 
 export const run = async (submission) => {
+  let smsUserRef, smsUserData
   try {
     const { Body: prompt, ...Client } = submission
     if (!Client.From) {
       throw { type: "bad_submission", message: "Invalid submission: missing `From` value" }
     }
-    const {ref: smsUserRef, data: smsUserData} = await findOrCreateSmsUser(Client.From)
+    ;({ref: smsUserRef, data: smsUserData} = await findOrCreateSmsUser(Client.From))
+    if (smsUserData.blocked) { throw { type: "smsUser_blocked", message: "BLOCKED" } }
 
     const params = {
       prompt,
@@ -132,20 +134,28 @@ export const run = async (submission) => {
     return `Fulfilled submission at ${Date.now()}`
   } catch(err) {
     console.error(err)
+    let result = null
     switch (err.type) {
       case "invalid_request_error":
+        result = {code: 400, message: "OpenAI Invalid Request"}
         if (submission.From) {
+          if (smsUserData.warnOpenAiInvalidRequest) {
+            break
+          }
           twilioCLient.messages.create({   
             messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID,
             to: submission.From,
             body: err.message
           })
-          .then(message => console.log(message.sid))
+          .then(message => {
+            return smsUserRef.update({ warnOpenAiInvalidRequest: FieldValue.serverTimestamp() })
+          })
           .done()
         }
         break
       default:
+        result = {code: 400, ...err}
     }
-    return err.message
+    return result
   }
 }
