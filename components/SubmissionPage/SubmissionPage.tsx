@@ -6,7 +6,7 @@ import useEntriesStore, { Entry } from "@/store/entries"
 import { useEffect, useState } from "react"
 import styles from "./SubmissionPage.module.css"
 import EntryPreview from "../EntryPreview"
-import SquareCheckout from "../SquareCheckout"
+import TipJar from "../TipJar"
 
 interface SubmissionPageProps {
   id: string,
@@ -52,7 +52,7 @@ const SubmissionPage = (props: SubmissionPageProps) => {
       <div className="previews">
         { entries.map((entry: Entry) => <EntryPreview key={entry.downloadURL} entry={entry} />) }
       </div>
-      <SquareCheckout />
+      <TipJar />
     </div>
   )
 }

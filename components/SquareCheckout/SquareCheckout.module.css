@@ -1,3 +1,12 @@
 .SquareCheckout {
 
 }
+
+.apple-pay {
+  height: 48px;
+  width: 100%;
+  display: inline-block;
+  -webkit-appearance: -apple-pay-button;
+  -apple-pay-button-type: plain;
+  -apple-pay-button-style: black;
+}
