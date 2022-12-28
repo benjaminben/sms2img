@@ -8,7 +8,9 @@ import { getAuth, signOut } from 'firebase/auth';
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   try {
     const cookies = nookies.get(ctx);
-    const token = await firebaseAdmin.auth().verifyIdToken(cookies.token);
+    /* NB: Cookie must be called `__session` to pass through
+      Firebase Functions */
+    const token = await firebaseAdmin.auth().verifyIdToken(cookies.__session);
 
     // the user is authenticated!
     const { admin } = token;

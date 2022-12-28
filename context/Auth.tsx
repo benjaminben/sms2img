@@ -13,11 +13,15 @@ export function AuthProvider({ children }: any) {
     return getAuth().onIdTokenChanged(async (user) => {
       if (!user) {
         setUser(null);
-        nookies.set(undefined, 'token', '', { path: '/' });
+        /* NB: Cookie must be called `__session` to pass through
+          Firebase Functions */
+        nookies.set(undefined, '__session', '', { path: '/' });
       } else {
         const token = await user.getIdToken();
         setUser(user);
-        nookies.set(undefined, 'token', token, { path: '/' });
+        /* NB: Cookie must be called `__session` to pass through
+          Firebase Functions */
+        nookies.set(undefined, '__session', token, { path: '/' });
       }
     });
   }, []);
