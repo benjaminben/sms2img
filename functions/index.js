@@ -49,3 +49,37 @@ exports.enqueueSms2img = functions.https.onRequest(
     response.sendStatus(200)
   }
 )
+
+exports.generateSubmissionPreview = functions.https.onRequest(
+  async (_request, response) => {
+    const sid = _request.query.submissionId
+    if (!sid) {
+      return response.status(400).send("Submission ID required")
+    }
+
+    const submission = await admin.firestore().collection("submissions").doc(sid).get()
+    if (!submission.exists) {
+      return response.status(400).send("Invalid submission ID")
+    }
+
+    const res = {
+      previewURL: null,
+      description: null,
+    }
+
+    res.description = submission.data().prompt
+    
+    const items = submission.data().items
+    if (items?.length) {
+      const firstItem = await items[0].get()
+      if (firstItem.exists) {
+        const firstItemStoragePath = firstItem.data().storagePath
+        const previewFile = admin.storage().bucket(process.env.STORAGE_BUCKET).file(firstItemStoragePath)
+        const [previewURL] = await previewFile.getSignedUrl({action: 'read', expires: Date.now() + 1000 * 60 * 10})
+        res.previewURL = previewURL
+      }
+    }
+
+    return response.send(res)
+  }
+)

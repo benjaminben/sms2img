@@ -131,6 +131,11 @@ export const run = async (submission) => {
       items: entryRefs,
     })
     await submissionRef.collection('private').doc('sender').set({ smsUserRef })
+    twilioCLient.messages.create({   
+      messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID,
+      to: submission.From,
+      body: `Results available here: ${process.env.CLIENT_BASE_URL}/${submissionRef.id}`
+    })
     return `Fulfilled submission at ${Date.now()}`
   } catch(err) {
     console.error(err)

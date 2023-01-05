@@ -35,11 +35,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-sa.json
-output
 
+output
+.well-known
+
+# firebase / GCP
+cors.json
+firebase-debug.log
+ui-debug.log
+sa.json
 .firebase
 .firebaserc
 firebase.json
-
-.well-known
